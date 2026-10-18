@@ -1,0 +1,21 @@
+{
+  "copied_on": "2026-10-19",
+  "note": "Source SQL copied without modification. Local auth/bootstrap and API role migrations are separate.",
+  "files": [
+    {
+      "source": "/Users/vineeth_raj/Documents/Projects/equiprent-platform-private/docs/data-model/normalized-proposal/sql/20261018174007_normalized_domain_tables.sql",
+      "file": "db/migrations/20261018174007_normalized_domain_tables.sql",
+      "sha256": "bee16f6ce017c80b073e7237971dec8875fc3d09c3394c43b7eaf608714ef0ee"
+    },
+    {
+      "source": "/Users/vineeth_raj/Documents/Projects/equiprent-platform-private/docs/data-model/normalized-proposal/sql/20261018174015_normalized_domain_integrity.sql",
+      "file": "db/migrations/20261018174015_normalized_domain_integrity.sql",
+      "sha256": "bf9b8c90efcf832b920bf3129629b0d525e274d09787b72342f7b1b49c5f2794"
+    },
+    {
+      "source": "/Users/vineeth_raj/Documents/Projects/equiprent-platform-private/docs/data-model/normalized-proposal/sql/20261018174016_normalized_domain_access.sql",
+      "file": "db/migrations/20261018174016_normalized_domain_access.sql",
+      "sha256": "cc5defa15f905c9ca89453c1f05998b3291c82909d23feae9b8ab5d4eec2e333"
+    }
+  ]
+}

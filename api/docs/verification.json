@@ -1,0 +1,18 @@
+{
+  "verifiedOn": "2026-10-19",
+  "scope": "Local runnable database REST API selected by user",
+  "businessTables": 122,
+  "businessSchemas": 16,
+  "documentedOperations": 463,
+  "integrationTests": {
+    "passed": 16,
+    "failed": 0,
+    "includes": "All table reads, authorization, archives, FK and check constraints, composite keys, concurrent reservations, exact bigint, sensitive-field redaction, rollback and deferred journal balancing"
+  },
+  "openapi": "Validated with @apidevtools/swagger-parser",
+  "postmanRequests": "471 structurally checked; 11 quickstart requests executed over real HTTP",
+  "runtime": "Docker Compose API and PostgreSQL healthy",
+  "dependencyAudit": "0 known vulnerabilities at last npm install audit",
+  "secretsScan": "No generated credentials in distributable files",
+  "originalProject": "No source modifications; source SQL copied byte-for-byte"
+}

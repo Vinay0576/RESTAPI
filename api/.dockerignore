@@ -1,0 +1,6 @@
+node_modules
+.env
+.git
+postman/local.postman_environment.json
+test-results
+*.log

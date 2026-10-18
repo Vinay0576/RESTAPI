@@ -1,0 +1,50 @@
+{
+  "verifiedAt": "2026-10-18T19:26:38.186Z",
+  "scope": "Exported Postman Quickstart requests executed over HTTP; Postman application not automated.",
+  "results": [
+    {
+      "request": "01 — Readiness",
+      "status": 200
+    },
+    {
+      "request": "02 — Browse all 122 resources",
+      "status": 200
+    },
+    {
+      "request": "03 — Read seeded machines",
+      "status": 200
+    },
+    {
+      "request": "04 — Filter requested bookings",
+      "status": 200
+    },
+    {
+      "request": "05 — Create manufacturer",
+      "status": 201
+    },
+    {
+      "request": "06 — Read created manufacturer",
+      "status": 200
+    },
+    {
+      "request": "07 — Update manufacturer",
+      "status": 200
+    },
+    {
+      "request": "08 — Archive manufacturer",
+      "status": 204
+    },
+    {
+      "request": "09 — Read retained archived row",
+      "status": 200
+    },
+    {
+      "request": "10 — Derived finance view",
+      "status": 200
+    },
+    {
+      "request": "11 — Atomic balanced journal",
+      "status": 200
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "EquipRent local (fill keys)",
+  "_postman_variable_scope": "environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3100",
+      "enabled": true
+    },
+    {
+      "key": "apiKey",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "readKey",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+node_modules/
+.env
+postman/local.postman_environment.json
+test-results/
+coverage/
+*.log

@@ -1,0 +1,65 @@
+name: equiprent-model-api
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Run npm run setup}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run npm run setup}
+    ports:
+      - "127.0.0.1:${PG_PORT:-55440}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+    restart: unless-stopped
+  migrate:
+    build: .
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      API_DB_PASSWORD: ${API_DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+  api:
+    build: .
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3100
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${POSTGRES_DB}
+      PGUSER: equiprent_api
+      PGPASSWORD: ${API_DB_PASSWORD}
+      API_ADMIN_KEY: ${API_ADMIN_KEY}
+      API_READ_KEY: ${API_READ_KEY}
+      DB_POOL_MAX: ${DB_POOL_MAX:-10}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "127.0.0.1:${API_PORT:-3100}:3100"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3100/health/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    init: true
+    read_only: true
+    tmpfs: ["/tmp"]
+    cap_drop: ["ALL"]
+    security_opt: ["no-new-privileges:true"]
+    restart: unless-stopped
+volumes:
+  postgres_data:

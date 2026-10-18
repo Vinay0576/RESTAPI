@@ -1,0 +1,10 @@
+{
+  "tables": 122,
+  "businessSchemas": 16,
+  "derivedViews": 1,
+  "documentedOperations": 463,
+  "quickstartRequests": 11,
+  "sourceModelDate": "2026-10-18",
+  "implementationDate": "2026-10-19",
+  "scope": "Local privileged database REST API, not production marketplace workflows."
+}
