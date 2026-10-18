@@ -1,6 +1,6 @@
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
-import {randomUUID} from 'node:crypto';
+import {randomUUID,randomInt} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {loadConfig} from '../src/config.js';
@@ -154,4 +154,64 @@ test('supplied financial view returns JSON and malformed IDs do not reach SQL',a
   expect(await request('GET',base+'/finance/booking-balances'),200);
   expect(await request('GET',base+'/fleet/machines/not-a-uuid'),422);
   expect(await request('GET','/v1/admin/public/arbitrary-table'),404);
+});
+
+test('finance contracts controller preserves create, reads, pagination and audit records',async()=>{
+  const path=base+'/finance/contracts';
+  const policy=expect(await request('POST',base+'/finance/policy-versions',{
+    version:randomInt(1,2147483647),tax_rate:'0.18',commission_rate:'0.1',retention_rate:'0.05',
+    advance_rate:'0.2',security_deposit_minor:'10000',effective_from:new Date().toISOString()
+  }),201).data;
+  const booking=expect(await request('POST',base+'/rentals/bookings',{
+    customer_account_id:customer,supplier_account_id:owner,machine_id:'50000000-0000-4000-8000-000000000001',
+    request_key:randomUUID(),starts_at:new Date(Date.now()+86400000*30).toISOString(),
+    ends_at:new Date(Date.now()+86400000*31).toISOString(),mode:'machine_only'
+  }),201).data;
+  const body={booking_id:booking.id,revision:1,policy_version_id:policy.id,
+    machine_rate_version_id:'51000000-0000-4000-8000-000000000001',payment_plan:'full',agreed_at:new Date().toISOString()};
+  const response=await request('POST',path,body);
+  const created=expect(response,201);
+  assert.equal(response.headers.location,path+'/'+created.data.id);
+  assert.equal(created.data.created_by,config.actorId);
+  assert.equal(created.data.currency_code,'INR');
+  assert.equal(created.meta.requestId,response.headers['x-request-id']);
+  const saved=expect(await request('GET',response.headers.location,undefined,config.readKey),200);
+  assert.deepEqual(saved.data,created.data);
+  const second=expect(await request('POST',path,{...body,revision:2}),201);
+  const filter=encodeURIComponent(JSON.stringify({booking_id:booking.id}));
+  const firstPage=expect(await request('GET',path+'?filter='+filter+'&sort=-revision&limit=1',undefined,config.readKey),200);
+  assert.equal(firstPage.data[0].id,second.data.id);
+  assert.deepEqual(firstPage.page,{limit:1,offset:0,total:'2',hasMore:true});
+  const lastPage=expect(await request('GET',path+'?filter='+filter+'&sort=-revision&limit=1&offset=1'),200);
+  assert.equal(lastPage.data[0].id,created.data.id);
+  assert.deepEqual(lastPage.page,{limit:1,offset:1,total:'2',hasMore:false});
+  const audits=expect(await request('GET',base+'/audit/events?filter='+encodeURIComponent(JSON.stringify({request_id:created.meta.requestId}))),200);
+  assert.ok(audits.data.some(row=>row.object_schema==='finance'&&row.object_table==='contracts'&&JSON.parse(row.object_key).id===created.data.id));
+  expect(await request('POST',path,body),409);
+  expect(await request('POST',path,{...body,revision:3,booking_id:randomUUID()}),409);
+  for(const method of ['PATCH','DELETE','PUT']) {
+    expect(await request(method,response.headers.location,method==='DELETE'?undefined:{revision:3}),405);
+  }
+  expect(await request('POST','/v1/transactions',{operations:[
+    {resource:'finance.contracts',method:'PATCH',key:{id:created.data.id},body:{revision:3}}
+  ]}),405);
+  assert.equal(expect(await request('GET',response.headers.location),200).data.revision,1);
+});
+
+test('finance contracts routes retain authentication, validation and error responses',async()=>{
+  const path=base+'/finance/contracts';
+  expect(await request('GET',path,undefined,null),401);
+  expect(await request('GET',path,undefined,'incorrect-key'),401);
+  expect(await request('GET',path+'/'+randomUUID(),undefined,null),401);
+  expect(await request('POST',path,{},config.readKey),403);
+  expect(await request('GET',path+'?unknown=true'),422);
+  expect(await request('GET',path+'?limit=101'),422);
+  expect(await request('GET',path+'/not-a-uuid'),422);
+  expect(await request('GET',path+'/'+randomUUID()),404);
+  expect(await request('POST',path,{}),422);
+  const spec=app.swagger();
+  assert.deepEqual(Object.keys(spec.paths[path]).sort(),['get','post']);
+  assert.deepEqual(Object.keys(spec.paths[path+'/{id}']),['get']);
+  const count=Object.values(spec.paths).reduce((n,p)=>n+Object.keys(p).filter(k=>['get','post','patch','delete'].includes(k)).length,0);
+  assert.equal(count,463);
 });

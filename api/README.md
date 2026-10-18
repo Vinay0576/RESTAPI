@@ -120,9 +120,24 @@ src/services.js     Transaction orchestration and retention policies
 src/repository.js   Parameterized queries, allowlisted identifiers, audit writes
 src/db.js           Connection pool, transaction-local context and timeouts
 src/errors.js       Consistent sanitized error responses
+src/http/schemas.js Shared HTTP validation and response schemas
+src/modules/finance/contracts.routes.js     Contracts routes and method restrictions
+src/modules/finance/contracts.controller.js Contracts HTTP handlers
 scripts/migrate.mjs Checksum-controlled, transaction-safe migrations
 scripts/export.mjs OpenAPI/resource/Postman generation from registered routes
 ```
+
+The contracts endpoint is owned by `src/modules/finance`. `app.js` registers its
+Fastify route plugin after the shared authentication hook and excludes
+`finance.contracts` from the generic route loop. The controller delegates to the
+existing service and repository so transactions, filtering, pagination, audit
+writes and database constraints remain shared. Request/response schemas still
+come from the deployed model through `src/http/schemas.js`.
+
+Contracts support list, get-by-ID and create. PATCH, DELETE and PUT remain
+disallowed because contracts are append-only. Batch contract operations still
+use the shared `/v1/transactions` service. The booking-balances route continues
+to read the derived database view.
 
 The API has bounded payloads/pagination, strict input validation, security headers, per-IP rate limiting, sanitized logs, generated request IDs, and graceful shutdown. No provider payment, refund, payout, SMS, upload, or background job is executed by these data endpoints. Writing a provider-status column is a local data operation, not evidence of a real payment. Production marketplace commands, actor authorization, verified integrations and legacy-data migration remain outside this confirmed scope.
 

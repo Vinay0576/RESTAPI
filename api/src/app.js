@@ -9,17 +9,8 @@ import {loadResources,describeResource} from './model.js';
 import {createService} from './services.js';
 import {authHook} from './auth.js';
 import {ApiError,normalizeError} from './errors.js';
-
-const meta={type:'object',properties:{requestId:{type:'string',format:'uuid'}},required:['requestId'],additionalProperties:false};
-const envelope=data=>({type:'object',properties:{data,meta},required:['data','meta'],additionalProperties:false});
-const errorSchema={type:'object',properties:{error:{type:'object',properties:{code:{type:'string'},message:{type:'string'},details:{}},required:['code','message']},requestId:{type:'string'}},required:['error','requestId']};
-const errors=Object.fromEntries([400,401,403,404,405,409,413,415,422,429,500,503].map(code=>[code,errorSchema]));
-const noQuery={type:'object',properties:{},additionalProperties:false};
-const listQuery={type:'object',properties:{limit:{type:'string',pattern:'^[0-9]{1,3}$'},offset:{type:'string',pattern:'^[0-9]{1,6}$'},
-  sort:{type:'string',maxLength:200,description:'Comma-separated columns; prefix - for descending. Primary key breaks ties.'},
-  filter:{type:'string',maxLength:4000,description:'JSON equality-filter object, e.g. {"state":"requested"}. Use string values for numeric/int8 fields.'},
-  q:{type:'string',minLength:1,maxLength:200,description:'Literal case-insensitive substring across text fields.'},
-  includeArchived:{type:'string',enum:['true','false']}},additionalProperties:false};
+import {errors,noQuery,listQuery,resourceSchemas} from './http/schemas.js';
+import {contractsRoutes,CONTRACT_RESOURCE} from './modules/finance/contracts.routes.js';
 
 export async function buildApp(config,{logger=true}={}) {
   const app=Fastify({bodyLimit:1024*1024,genReqId:()=>randomUUID(),requestIdHeader:false,
@@ -65,12 +56,12 @@ export async function buildApp(config,{logger=true}={}) {
       const rows=await db.transaction(c=>c.query('select * from finance.booking_balances where ($1::uuid is null or booking_id=$1) order by booking_id limit $2 offset $3',[request.query.booking_id??null,limit,offset]),{readOnly:true});
       return {data:rows.rows,page:{limit,offset},meta:{requestId:request.id}};
     });
+    await app.register(contractsRoutes,{resource:resources.find(r=>r.name===CONTRACT_RESOURCE),service});
     for(const r of resources) {
-      const base={tags:[r.domain],description:`${r.purpose}\n\nRetention: ${r.mode}. Privileged local data administration; source client permissions: ${r.access}`,
-        'x-resource':r.name};
-      const one=envelope(r.responseSchema);
-      app.get(r.path,{schema:{...base,summary:`List ${r.name}`,querystring:listQuery,response:{...errors,200:{type:'object',properties:{
-        data:{type:'array',items:r.responseSchema},page:{type:'object',properties:{limit:{type:'integer'},offset:{type:'integer'},total:{type:'string'},hasMore:{type:'boolean'}},required:['limit','offset','total','hasMore']},meta},required:['data','page','meta']}}}},
+      // Contracts are registered by their dedicated finance module.
+      if(r.name===CONTRACT_RESOURCE) continue;
+      const {base,one,list}=resourceSchemas(r);
+      app.get(r.path,{schema:{...base,summary:`List ${r.name}`,querystring:listQuery,response:{...errors,200:list}}},
         async request=>({...await service.list(r,request.query),meta:{requestId:request.id}}));
       app.get(r.itemPath,{schema:{...base,summary:`Get ${r.name}`,params:r.keySchema,querystring:noQuery,response:{...errors,200:one}}},
         async request=>({data:await service.get(r,request.params),meta:{requestId:request.id}}));
