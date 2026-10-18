@@ -113,31 +113,65 @@ Separate local migrations add minimal `auth.users`, `auth.sessions`, `auth.uid()
 The application connects as non-superuser `equiprent_api`, then selects the privileged `service_role` **inside each transaction** after API-key authentication. This intentionally permits local dataset administration across account boundaries; it is not an implementation of the proposal's end-user RLS contracts. Existing RLS definitions remain installed. The seeded API actor is server-selected, and clients cannot set audit actors. Per-table database business guards still run under this role.
 
 ```text
-src/app.js          HTTP routes, request/response schemas, OpenAPI and middleware
+src/app.js          App setup, module registration, metadata and batch endpoints
 src/auth.js         Constant-time API-key checks and write authorization
 src/model.js        Fixed model allowlist + database type/constraint inspection
 src/services.js     Transaction orchestration and retention policies
 src/repository.js   Parameterized queries, allowlisted identifiers, audit writes
 src/db.js           Connection pool, transaction-local context and timeouts
 src/errors.js       Consistent sanitized error responses
-src/http/schemas.js Shared HTTP validation and response schemas
-src/modules/finance/contracts.routes.js     Contracts routes and method restrictions
-src/modules/finance/contracts.controller.js Contracts HTTP handlers
+src/http/          Shared HTTP schemas, resource handlers and route registration
+src/modules/       Domain controllers, module route manifests and resource routes
 scripts/migrate.mjs Checksum-controlled, transaction-safe migrations
 scripts/export.mjs OpenAPI/resource/Postman generation from registered routes
 ```
 
-The contracts endpoint is owned by `src/modules/finance`. `app.js` registers its
-Fastify route plugin after the shared authentication hook and excludes
-`finance.contracts` from the generic route loop. The controller delegates to the
-existing service and repository so transactions, filtering, pagination, audit
-writes and database constraints remain shared. Request/response schemas still
-come from the deployed model through `src/http/schemas.js`.
+Each of the 16 domain modules has one controller, a route manifest and a
+`routes/` directory with one route file per resource. For example:
 
-Contracts support list, get-by-ID and create. PATCH, DELETE and PUT remain
-disallowed because contracts are append-only. Batch contract operations still
-use the shared `/v1/transactions` service. The booking-balances route continues
-to read the derived database view.
+```text
+src/modules/
+├── index.js                         Explicit registry of all 16 modules
+├── register.js                      Coverage checks and Fastify registration
+├── finance/
+│   ├── finance.controller.js        Finance handlers, including booking balances
+│   ├── finance.routes.js            Finance resource route manifest
+│   └── routes/
+│       ├── contracts.routes.js
+│       ├── contract-lines.routes.js
+│       ├── booking-balances.routes.js
+│       └── ...
+├── rentals/
+│   ├── rentals.controller.js
+│   ├── rentals.routes.js
+│   └── routes/
+│       ├── bookings.routes.js
+│       └── ...
+└── ...
+```
+
+The modules are identity, geography, access-control, catalogue, fleet, workforce,
+compliance, rentals, scheduling, logistics, finance, reputation, support,
+messaging, referrals and audit. The `access-control` folder and URL retain the
+`access_control` database name and Swagger tag.
+
+`app.js` registers modules after the shared authentication hook. Startup checks
+that each of the 122 model resources has exactly one route registration in its
+own domain. The module controller exposes handlers by resource name, such as
+`controller.contracts.list`. Resource routes select these handlers and reuse
+`src/http/resource-routes.js` for schemas and allowed methods. Controllers reuse
+`src/http/resource-controller.js` for standard operations and can add or override
+handlers in their own module. Services and repositories continue to own
+transactions, filtering, pagination, audit writes and database constraints.
+
+To customize a resource, start in its `routes/<resource>.routes.js` and its
+module controller. When adding a model resource, add its route file to the
+module manifest too; incomplete coverage fails startup. Changes in shared HTTP
+helpers apply across all modules.
+
+Contracts remain append-only, and batch operations still use the shared
+`/v1/transactions` service. The derived booking-balances route now belongs to
+the finance module and is handled by `finance.controller.js`.
 
 The API has bounded payloads/pagination, strict input validation, security headers, per-IP rate limiting, sanitized logs, generated request IDs, and graceful shutdown. No provider payment, refund, payout, SMS, upload, or background job is executed by these data endpoints. Writing a provider-status column is a local data operation, not evidence of a real payment. Production marketplace commands, actor authorization, verified integrations and legacy-data migration remain outside this confirmed scope.
 
@@ -150,10 +184,20 @@ npm ci
 npm test
 npm run export
 npm run validate
+npm run check:swagger
 npm run smoke
 ```
 
 Integration tests use the configured **demo database** and add clearly labeled test fixtures. They exercise every table's list endpoint, permissions, FK/uniqueness constraints, composite keys, append-only restrictions, archives, SQL-injection rejection, rollback, exact bigint handling, concurrent reservation conflicts and deferred ledger balancing. Do not point them at a production database.
+
+`npm run check:swagger` builds the current app against the local database,
+checks Swagger UI and `/openapi.json`, validates OpenAPI, compares it with the
+saved specification and prints coverage for all 16 modules (122 resources,
+463 operations). It checks each resource's methods, response codes and domain
+tag, plus the derived finance view, metadata and batch endpoints. All table
+routes also have integration checks for inherited authentication, validation
+and unsupported methods. For intentional API changes, review the generated
+specification with `npm run export` before rerunning this check.
 
 `npm run smoke` sends the exported Quickstart requests to the running HTTP server; it does not automate the Postman application. `npm run validate` validates generated OpenAPI and collection structure. `npm run export` refreshes the private Postman environment after key/port changes.
 

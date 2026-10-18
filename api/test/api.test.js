@@ -31,6 +31,19 @@ test('every table has a functioning authenticated JSON list endpoint',async()=>{
     assert.ok(json.meta.requestId);
   }
 });
+test('every module inherits authentication, validation and method restrictions',async()=>{
+  for(const r of app.resources) {
+    expect(await request('GET',r.path,undefined,null),401);
+    expect(await request('GET',r.path+'?limit=1',undefined,config.readKey),200);
+    expect(await request('GET',r.path+'?unknown=true'),422);
+    expect(await request('POST',r.path,{},config.readKey),403);
+    const itemPath=r.path+r.pk.map(()=>'/unsupported').join('');
+    expect(await request('PUT',itemPath,{}),405);
+    if(r.mode==='append') expect(await request('PATCH',itemPath,{}),405);
+    if(r.mode!=='archive') expect(await request('DELETE',itemPath),405);
+    if(r.readOnly) expect(await request('POST',r.path,{}),405);
+  }
+});
 test('missing and invalid API keys fail; reader cannot write',async()=>{
   expect(await request('GET',base+'/identity/accounts',undefined,null),401);
   expect(await request('GET',base+'/identity/accounts',undefined,'incorrect-key'),401);
@@ -152,6 +165,10 @@ test('sensitive binary and token columns are omitted, including batch results',a
 });
 test('supplied financial view returns JSON and malformed IDs do not reach SQL',async()=>{
   expect(await request('GET',base+'/finance/booking-balances'),200);
+  expect(await request('GET',base+'/finance/booking-balances',undefined,config.readKey),200);
+  expect(await request('GET',base+'/finance/booking-balances',undefined,null),401);
+  expect(await request('GET',base+'/finance/booking-balances?limit=101'),422);
+  expect(await request('GET',base+'/finance/booking-balances?booking_id=not-a-uuid'),422);
   expect(await request('GET',base+'/fleet/machines/not-a-uuid'),422);
   expect(await request('GET','/v1/admin/public/arbitrary-table'),404);
 });

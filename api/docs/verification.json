@@ -5,11 +5,11 @@
   "businessSchemas": 16,
   "documentedOperations": 463,
   "integrationTests": {
-    "passed": 16,
+    "passed": 21,
     "failed": 0,
-    "includes": "All table reads, authorization, archives, FK and check constraints, composite keys, concurrent reservations, exact bigint, sensitive-field redaction, rollback and deferred journal balancing"
+    "includes": "All table reads, authorization, archives, FK and check constraints, composite keys, concurrent reservations, exact bigint, sensitive-field redaction, rollback and deferred journal balancing; module registration coverage, inherited authentication/validation/method restrictions across all 122 resources, finance contract creation/read/pagination/audit/immutability"
   },
-  "openapi": "Validated with @apidevtools/swagger-parser",
+  "openapi": "Live Swagger UI and OpenAPI checked; all 16 module tags, 122 resources and 463 operations verified with npm run check:swagger; saved specification matches; validated with @apidevtools/swagger-parser",
   "postmanRequests": "471 structurally checked; 11 quickstart requests executed over real HTTP",
   "runtime": "Docker Compose API and PostgreSQL healthy",
   "dependencyAudit": "0 known vulnerabilities at last npm install audit",
