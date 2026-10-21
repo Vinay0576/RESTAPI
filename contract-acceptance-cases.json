@@ -1,0 +1,614 @@
+{
+  "title": "EquipRent draft contract acceptance cases",
+  "status": "Planned, not executed; no API implementation exists in this workspace.",
+  "clock_note": "Relative-date scenarios use a fixed server date in Asia/Kolkata. Example UUIDs and data are fictitious.",
+  "case_count": 28,
+  "cases": [
+    {
+      "id": "ADDR-01",
+      "method": "POST",
+      "path": "/v1/me/addresses",
+      "setup": "Admitted account, no normalized duplicate.",
+      "request": {
+        "body": {
+          "label": "Warehouse",
+          "address": "Example site, Hyderabad"
+        }
+      },
+      "expected": {
+        "status": 201,
+        "assertions": [
+          "Owner comes from session, UUID returned, coordinates nullable."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-02",
+      "method": "POST",
+      "path": "/v1/me/addresses",
+      "setup": "Same account has Warehouse / Example site, Hyderabad.",
+      "request": {
+        "body": {
+          "label": " WAREHOUSE ",
+          "address": "Example  site, Hyderabad",
+          "lat": 17.44,
+          "lng": 78.35
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Same existing UUID and stored coordinates; no second row.",
+          "Two concurrent creates result in one canonical row."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Client duplicate intent exists; atomic DB uniqueness is proposed and requires migration.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-03",
+      "method": "PATCH",
+      "path": "/v1/me/addresses/{id}",
+      "setup": "Own stored address.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {}
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "No row changed."
+        ]
+      },
+      "verification_layer": "schema",
+      "basis": "Proposed nonempty PATCH validation.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-04",
+      "method": "PATCH",
+      "path": "/v1/me/addresses/{id}",
+      "setup": "Own stored address.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "lat": null,
+          "lng": null
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Both coordinates cleared; text unchanged."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Proposed partial update and explicit clearing semantics.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-05",
+      "method": "POST",
+      "path": "/v1/me/addresses",
+      "setup": "Authenticated account.",
+      "request": {
+        "body": {
+          "label": "Site",
+          "address": "Example",
+          "lat": 17.44
+        }
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "Coordinate pair required; no write."
+        ]
+      },
+      "verification_layer": "schema",
+      "basis": "New stricter safeguard, not current table constraint.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-06",
+      "method": "PATCH",
+      "path": "/v1/me/addresses/{id}",
+      "setup": "Address belongs to another account with the same verified phone.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {
+          "label": "Changed"
+        }
+      },
+      "expected": {
+        "status": 404,
+        "assertions": [
+          "No data disclosure or cross-account update."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-07",
+      "method": "DELETE",
+      "path": "/v1/me/addresses/{id}",
+      "setup": "ID belongs to a different account.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "expected": {
+        "status": 204,
+        "assertions": [
+          "Foreign row remains unchanged."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "ADDR-08",
+      "method": "GET",
+      "path": "/v1/me/addresses",
+      "setup": "Saved address table is unavailable; client previously used local fallback.",
+      "request": {},
+      "expected": {
+        "status": 503,
+        "assertions": [
+          "No successful empty-list response or fabricated local UUID.",
+          "Client import/remapping is a separate migration step."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Proposed fail-closed adapter behavior; no server-side AsyncStorage fallback.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-01",
+      "method": "GET",
+      "path": "/v1/machines",
+      "setup": "Public eligible catalogue contains more than 60 matches.",
+      "request": {
+        "query": {
+          "limit": 61
+        }
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "Do not silently clamp or bypass current guest RPC cap."
+        ]
+      },
+      "verification_layer": "schema",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-02",
+      "method": "GET",
+      "path": "/v1/machines",
+      "setup": "Any guest.",
+      "request": {
+        "query": {
+          "lat": 17.44
+        }
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "Require longitude too."
+        ]
+      },
+      "verification_layer": "service validation",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-03",
+      "method": "GET",
+      "path": "/v1/machines",
+      "setup": "Any guest.",
+      "request": {
+        "query": {
+          "bounds": {
+            "south": -10,
+            "north": 10,
+            "west": 170,
+            "east": -170
+          }
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Cross-antimeridian bounds accepted; empty items is valid."
+        ]
+      },
+      "verification_layer": "service validation",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-04",
+      "method": "GET",
+      "path": "/v1/machines",
+      "setup": "Eligible listing present.",
+      "request": {
+        "query": {
+          "sort": "newest",
+          "withOperator": false,
+          "limit": 24
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Exact total, stable ID tie-breaker.",
+          "No owner_id, owner_name, phone, precise yard coordinates or private document keys.",
+          "Rates retain documented INR rupee units."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-05",
+      "method": "GET",
+      "path": "/v1/machines/{id}",
+      "setup": "Caller owns a hidden/non-public machine.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "expected": {
+        "status": 404,
+        "assertions": [
+          "Public route does not switch to an owner projection.",
+          "Owner fleet route is used for private listing management."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Recommended consistent public projection; verify authenticated client migration.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "SEARCH-06",
+      "method": "GET",
+      "path": "/v1/machines",
+      "setup": "Server date fixed to 2026-10-18 Asia/Kolkata.",
+      "request": {
+        "query": {
+          "startDate": "2026-11-17",
+          "endDate": "2026-11-17"
+        }
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "Today+30 is outside allowed today..today+29 start horizon."
+        ]
+      },
+      "verification_layer": "service validation",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "HOLD-01",
+      "method": "POST",
+      "path": "/v1/checkout-holds",
+      "setup": "Same customer has a live hold for exactly this window; fixed server clock.",
+      "request": {
+        "body": {
+          "machineId": "00000000-0000-4000-8000-000000000001",
+          "startDate": "2026-10-19",
+          "endDate": "2026-10-19",
+          "startMinute": 600,
+          "durationMinutes": 120
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Same hold UUID and unchanged expiry; no renewal."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "HOLD-02",
+      "method": "POST",
+      "path": "/v1/checkout-holds",
+      "setup": "Two admitted customers concurrently acquire the same available window.",
+      "request": {
+        "body": {
+          "machineId": "00000000-0000-4000-8000-000000000001",
+          "startDate": "2026-10-19",
+          "endDate": "2026-10-19",
+          "startMinute": 600,
+          "durationMinutes": 120
+        }
+      },
+      "expected": {
+        "statuses": [
+          200,
+          409
+        ],
+        "assertions": [
+          "Exactly one conflicting reservation wins; constraints remain enabled."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "HOLD-03",
+      "method": "DELETE",
+      "path": "/v1/checkout-holds/{id}",
+      "setup": "Hold belongs to another customer.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        }
+      },
+      "expected": {
+        "status": 204,
+        "assertions": [
+          "Other customer hold is unchanged."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "BOOK-01",
+      "method": "POST",
+      "path": "/v1/bookings",
+      "setup": "Full booking DTO valid, hold expired or absent, availability still free.",
+      "request": {
+        "fixture": "Complete valid booking submission fixture must be supplied after BookingInput is finalized."
+      },
+      "expected": {
+        "status": 201,
+        "assertions": [
+          "Recheck and insert atomically; do not reject merely because hold expired."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Source-established rule; booking endpoint outside the 13-operation OpenAPI subset.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "BOOK-02",
+      "method": "POST",
+      "path": "/v1/bookings",
+      "setup": "Full booking DTO references a live hold for a different schedule.",
+      "request": {
+        "fixture": "Complete valid booking submission except live hold window mismatch."
+      },
+      "expected": {
+        "status": 409,
+        "errorCode": "HOLD_MISMATCH",
+        "assertions": [
+          "No booking or request receipt committed."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Source-established rule; booking endpoint outside the 13-operation OpenAPI subset.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-01",
+      "method": "GET",
+      "path": "/v1/me/notifications",
+      "setup": "Customer audience admitted.",
+      "request": {
+        "query": {
+          "audience": "customer",
+          "unread": false
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "Read and unread entries included; default limit40.",
+          "asOf is statement time; nextCursor is not a frozen-snapshot guarantee."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-02",
+      "method": "GET",
+      "path": "/v1/me/notifications",
+      "setup": "Signed cursor was issued for unread=true.",
+      "request": {
+        "query": {
+          "audience": "customer",
+          "unread": false,
+          "cursor": "cursor-from-another-filter"
+        }
+      },
+      "expected": {
+        "status": 422,
+        "errorCode": "INVALID_CURSOR",
+        "assertions": [
+          "No cross-filter cursor reuse."
+        ]
+      },
+      "verification_layer": "service validation",
+      "basis": "Proposed actor/filter-bound cursor.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-03",
+      "method": "PATCH",
+      "path": "/v1/me/notifications/{id}",
+      "setup": "Own notification exists.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        },
+        "body": {
+          "read": true
+        }
+      },
+      "expected": {
+        "status": 204,
+        "body": null,
+        "assertions": [
+          "Empty body; RPC boolean not exposed as a Notification."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-04",
+      "method": "PATCH",
+      "path": "/v1/me/notifications/{id}",
+      "setup": "Notification belongs to another account.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000002"
+        },
+        "body": {
+          "read": true
+        }
+      },
+      "expected": {
+        "status": 404,
+        "assertions": [
+          "Recipient scoping prevents mutation."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-05",
+      "method": "POST",
+      "path": "/v1/me/notifications/read",
+      "setup": "Customer audience admitted.",
+      "request": {
+        "body": {
+          "scope": "all",
+          "audience": "customer",
+          "before": "2026-10-18T06:00:00Z",
+          "messageIds": [
+            "00000000-0000-4000-8000-000000000001"
+          ]
+        }
+      },
+      "expected": {
+        "status": 422,
+        "assertions": [
+          "Mixed union branches rejected; no update."
+        ]
+      },
+      "verification_layer": "schema",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-06",
+      "method": "POST",
+      "path": "/v1/me/notifications/read",
+      "setup": "Some supplied support message IDs are foreign/missing.",
+      "request": {
+        "body": {
+          "scope": "support",
+          "messageIds": [
+            "00000000-0000-4000-8000-000000000001",
+            "00000000-0000-4000-8000-000000000002"
+          ]
+        }
+      },
+      "expected": {
+        "status": 204,
+        "body": null,
+        "assertions": [
+          "Only own support_reply source matches updated; no updatedCount or foreign existence signal."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "INBOX-07",
+      "method": "GET",
+      "path": "/v1/me/notifications/{id}/target",
+      "setup": "Own support reply points to an owned ticket.",
+      "request": {
+        "path": {
+          "id": "00000000-0000-4000-8000-000000000001"
+        }
+      },
+      "expected": {
+        "status": 200,
+        "assertions": [
+          "data.status and data.assignmentState are null; returnPending may be absent.",
+          "No fabricated kind/targetId navigation payload."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing capability, proposed HTTP mapping",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "AUTH-01",
+      "method": "GET",
+      "path": "/v1/me/addresses",
+      "setup": "Old device session has been replaced.",
+      "request": {},
+      "expected": {
+        "status": 401,
+        "assertions": [
+          "Session binding enforced before data access."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing device isolation requirement; final auth adapter unresolved.",
+      "execution_status": "not_run"
+    },
+    {
+      "id": "AUTH-02",
+      "method": "GET",
+      "path": "/v1/me/addresses",
+      "setup": "Session authority is temporarily unavailable, not known revoked.",
+      "request": {},
+      "expected": {
+        "status": 503,
+        "assertions": [
+          "Do not incorrectly revoke the device or return 401 merely for an outage."
+        ]
+      },
+      "verification_layer": "integration",
+      "basis": "Existing unavailable versus replaced distinction; proposed HTTP mapping.",
+      "execution_status": "not_run"
+    }
+  ]
+}

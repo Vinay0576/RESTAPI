@@ -1,0 +1,22 @@
+{
+  "operation_count": 13,
+  "schema_count": 18,
+  "resolved_local_references": 133,
+  "verified_source_anchors": 22,
+  "catalogue_route_consistency": "passed",
+  "path_parameter_consistency": "passed",
+  "success_response_presence": "passed",
+  "empty_204_contracts": "passed",
+  "security_declaration_presence": "passed",
+  "source_anchors": "passed",
+  "planned_acceptance_case_count": 28,
+  "acceptance_case_route_consistency": "passed",
+  "not_run": [
+    "Full OpenAPI specification validation",
+    "JSON Schema validation of examples",
+    "Application/database integration tests",
+    "Hosted schema or provider verification"
+  ],
+  "scope": "Static draft structure and traceability only; authorization and business-rule behavior not tested.",
+  "artifact_sha256": "def50fecd728d434a7881f339606ecb473ccb9ee3b7b3d9aa641b553510a8292"
+}

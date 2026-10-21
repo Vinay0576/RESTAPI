@@ -1,0 +1,4134 @@
+{
+  "openapi": "3.1.1",
+  "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
+  "info": {
+    "title": "EquipRent REST API — reviewed contract subset",
+    "version": "0.2.0-draft",
+    "description": "Design proposal for 13 operations, not a deployed API or full contract for all 266 catalogue entries. Evidence: source commit 70766035a1ecbd5b30ac5ca4acaf6b0323431cf0. Business rules and proposed deltas are explicit x-extensions; these are not automatically enforced by schema validators. No authentication issuance or staff permission model is frozen here."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Relative placeholder; paths already include /v1. No deployed server asserted."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Saved addresses"
+    },
+    {
+      "name": "Public catalogue"
+    },
+    {
+      "name": "Checkout holds"
+    },
+    {
+      "name": "Notifications"
+    }
+  ],
+  "paths": {
+    "/v1/me/addresses": {
+      "get": {
+        "operationId": "listSavedAddresses",
+        "summary": "List own saved addresses",
+        "tags": [
+          "Saved addresses"
+        ],
+        "description": "List own saved addresses",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Newest first; stable created_at DESC, id DESC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddressPage"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "label": "Warehouse",
+                      "address": "Example site, Hyderabad",
+                      "lat": 17.44,
+                      "lng": 78.35,
+                      "createdAt": "2026-10-18T06:00:00Z"
+                    }
+                  ],
+                  "page": {
+                    "limit": 25,
+                    "nextCursor": null
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "services/addressService.ts",
+            "line": 58,
+            "symbol": "export function savedAddressKey"
+          },
+          {
+            "file": "supabase/migrations/20260722170100_create_saved_addresses.sql",
+            "line": 6,
+            "symbol": "create table if not exists public.saved_addresses"
+          }
+        ],
+        "x-business-rules": [
+          "Ownership always comes from trusted actor context, never userId query.",
+          "Deduplicate legacy rows before pagination so one address does not appear on multiple pages."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Proposed limits: label 1..80 and address 1..1000 characters after trimming; reject whitespace-only text.",
+          "Current DB allows independently null coordinates. New writes require both coordinates or neither; clearing requires both null. Audit legacy rows before enforcing DB constraints.",
+          "Current deduplication is client-side read-before-write. Atomic normalized uniqueness and collision handling require a migration and duplicate cleanup; preserve most recent record under existing client rule.",
+          "Use a compound unique key (account, normalized label, normalized address), not the client delimiter-concatenated string; agree Unicode/case/whitespace normalization parity.",
+          "API uses UUIDs only. Device-local local_* addresses require explicit client import through POST and local-ID remapping; never silently discard them.",
+          "Cursor pagination and default 25/cap100 are new; existing client loads all rows."
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            },
+            "description": ""
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "description": "Proposed opaque signed cursor, bound to actor, endpoint and filters. Decode to created_at/id; reject tampering or filter changes with 422 INVALID_CURSOR. Not a frozen database snapshot."
+          }
+        ]
+      },
+      "post": {
+        "operationId": "saveAddress",
+        "summary": "Create or reuse saved address",
+        "tags": [
+          "Saved addresses"
+        ],
+        "description": "Create or reuse saved address",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Address"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "label": "Warehouse",
+                    "address": "Example site, Hyderabad",
+                    "lat": 17.44,
+                    "lng": 78.35,
+                    "createdAt": "2026-10-18T06:00:00Z"
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Existing normalized duplicate; preserve stored coordinates and identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Address"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "label": "Warehouse",
+                    "address": "Example site, Hyderabad",
+                    "lat": 17.44,
+                    "lng": 78.35,
+                    "createdAt": "2026-10-18T06:00:00Z"
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "services/addressService.ts",
+            "line": 58,
+            "symbol": "export function savedAddressKey"
+          },
+          {
+            "file": "supabase/migrations/20260722170100_create_saved_addresses.sql",
+            "line": 6,
+            "symbol": "create table if not exists public.saved_addresses"
+          }
+        ],
+        "x-business-rules": [
+          "Owner assigned server-side. Existing normalized duplicate does not silently update coordinates."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Proposed limits: label 1..80 and address 1..1000 characters after trimming; reject whitespace-only text.",
+          "Current DB allows independently null coordinates. New writes require both coordinates or neither; clearing requires both null. Audit legacy rows before enforcing DB constraints.",
+          "Current deduplication is client-side read-before-write. Atomic normalized uniqueness and collision handling require a migration and duplicate cleanup; preserve most recent record under existing client rule.",
+          "Use a compound unique key (account, normalized label, normalized address), not the client delimiter-concatenated string; agree Unicode/case/whitespace normalization parity.",
+          "API uses UUIDs only. Device-local local_* addresses require explicit client import through POST and local-ID remapping; never silently discard them."
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressCreate"
+              },
+              "examples": {
+                "newAddress": {
+                  "value": {
+                    "label": "Warehouse",
+                    "address": "Example site, Hyderabad",
+                    "lat": 17.44,
+                    "lng": 78.35
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/addresses/{id}": {
+      "patch": {
+        "operationId": "updateAddress",
+        "summary": "Edit own saved address",
+        "tags": [
+          "Saved addresses"
+        ],
+        "description": "Edit own saved address",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Address"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "label": "Warehouse",
+                    "address": "Example site, Hyderabad",
+                    "lat": 17.44,
+                    "lng": 78.35,
+                    "createdAt": "2026-10-18T06:00:00Z"
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ADDRESS_NOT_FOUND; missing and foreign IDs indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "DUPLICATE_ADDRESS",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONFLICT",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "services/addressService.ts",
+            "line": 58,
+            "symbol": "export function savedAddressKey"
+          },
+          {
+            "file": "supabase/migrations/20260722170100_create_saved_addresses.sql",
+            "line": 6,
+            "symbol": "create table if not exists public.saved_addresses"
+          }
+        ],
+        "x-business-rules": [
+          "Omitted fields unchanged; null allowed only for lat/lng, both supplied together.",
+          "Current service sends a full input. Nonempty partial PATCH is proposed; merge then validate; duplicate normalized key returns 409."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Proposed limits: label 1..80 and address 1..1000 characters after trimming; reject whitespace-only text.",
+          "Current DB allows independently null coordinates. New writes require both coordinates or neither; clearing requires both null. Audit legacy rows before enforcing DB constraints.",
+          "Current deduplication is client-side read-before-write. Atomic normalized uniqueness and collision handling require a migration and duplicate cleanup; preserve most recent record under existing client rule.",
+          "Use a compound unique key (account, normalized label, normalized address), not the client delimiter-concatenated string; agree Unicode/case/whitespace normalization parity.",
+          "API uses UUIDs only. Device-local local_* addresses require explicit client import through POST and local-ID remapping; never silently discard them."
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddressPatch"
+              },
+              "examples": {
+                "rename": {
+                  "value": {
+                    "label": "Main warehouse"
+                  }
+                },
+                "clearCoordinates": {
+                  "value": {
+                    "lat": null,
+                    "lng": null
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteAddress",
+        "summary": "Delete own saved address",
+        "tags": [
+          "Saved addresses"
+        ],
+        "description": "Delete own saved address",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted or already absent; foreign IDs also return 204 without modifying a row."
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "services/addressService.ts",
+            "line": 58,
+            "symbol": "export function savedAddressKey"
+          },
+          {
+            "file": "supabase/migrations/20260722170100_create_saved_addresses.sql",
+            "line": 6,
+            "symbol": "create table if not exists public.saved_addresses"
+          }
+        ],
+        "x-business-rules": [
+          "Deletion constrained by both id and trusted account ID; do not acknowledge database failure as success."
+        ],
+        "x-proposed-changes-requiring-confirmation": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ]
+      }
+    },
+    "/v1/machines": {
+      "get": {
+        "operationId": "searchMachines",
+        "summary": "Search publicly visible equipment",
+        "tags": [
+          "Public catalogue"
+        ],
+        "description": "Search publicly visible equipment",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MachineSearch"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "items": [
+                      {
+                        "ref_code": "EQ-EXAMPLE",
+                        "type": "example-type",
+                        "type_label": "Excavator",
+                        "make": "Example",
+                        "model": "Example model",
+                        "capacity": "Example capacity",
+                        "status": "Live",
+                        "image_uri": null,
+                        "city": "Hyderabad",
+                        "rate_daily": 5000,
+                        "rate_hourly": null,
+                        "rate_monthly": null,
+                        "weekly_discount_pct": null,
+                        "monthly_discount_pct": null,
+                        "operator_rate": 200,
+                        "machine_rating": null,
+                        "operator_rating": null,
+                        "distance_km": null,
+                        "id": "00000000-0000-4000-8000-000000000001",
+                        "year": 2024,
+                        "review_count": 0,
+                        "operator_included": false,
+                        "operator_available_on_request": true,
+                        "operator_rate_basis": "hourly",
+                        "kyc_verified": true,
+                        "image_uris": [],
+                        "feature_codes": []
+                      }
+                    ],
+                    "total": 1,
+                    "limit": 24,
+                    "offset": 0
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_WINDOW, INVALID_COORDINATES, INVALID_BOUNDS, INVALID_FILTER or INVALID_PAGE",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Public safe projection; never enrich based on an unverified bearer header.",
+        "x-source-evidence": [
+          {
+            "file": "services/marketplaceService.ts",
+            "line": 14,
+            "symbol": "export async function"
+          },
+          {
+            "file": "supabase/migrations/20261005102237_customer_guest_catalogue.sql",
+            "line": 26,
+            "symbol": "create or replace function public.search_guest_machines"
+          }
+        ],
+        "x-business-rules": [
+          "Map to search_guest_machines. Use a fixed parameterized RPC adapter and response allowlist. Never fetchMachine or SELECT *.",
+          "lat and lng supplied together; search coordinates are caller site coordinates, never return precise yard location.",
+          "startDate/endDate supplied together. Start today..today+29 in Asia/Kolkata; end>=start and end-start<=89 days.",
+          "startMinute/durationMinutes together and only with a single-day range; sum<=1440. Cross-field and relative-date checks are service validation, not enforced by independent query schemas.",
+          "Bounds all four fields, south<=north; support antimeridian crossing west>east.",
+          "Server determines publication/KYC/moderation/operator eligibility and service-radius availability. total is exact before limit/offset, ID is stable sort tie-breaker.",
+          "withOperator omitted means no operator filter; false excludes mandatory operator-included listings. nearest without coordinates follows existing null-distance/rating/ID ordering.",
+          "This public route always uses guest-safe projection, including authenticated callers. Audit authenticated client reliance on search_machines_filtered before replacing it."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "String lengths, types array cap, strict booleans/unknown query rejection and bounds validation are proposed HTTP hardening.",
+          "Preserve snake_case guest fields and decimal-rupee listing rate values for compatibility; charged payment DTOs separately use explicit integer minor units. Confirm currency/casing migration with clients.",
+          "Public detail route intentionally never switches to private owner projection. Owners use existing owner fleet route."
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 0,
+              "maxLength": 200
+            },
+            "description": ""
+          },
+          {
+            "name": "city",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "description": ""
+          },
+          {
+            "name": "types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "minItems": 1,
+              "maxItems": 50,
+              "uniqueItems": true
+            },
+            "description": "Repeat types=X&types=Y; active equipment codes, not labels. Proposed cap 50.",
+            "style": "form",
+            "explode": true
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -90,
+              "maximum": 90
+            },
+            "description": ""
+          },
+          {
+            "name": "lng",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": -180,
+              "maximum": 180
+            },
+            "description": ""
+          },
+          {
+            "name": "bounds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/Bounds"
+            },
+            "description": "bounds[south], bounds[north], bounds[west], bounds[east]; all four required. west>east crosses antimeridian; south<=north.",
+            "style": "deepObject",
+            "explode": true
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": ""
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date"
+            },
+            "description": ""
+          },
+          {
+            "name": "startMinute",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1439
+            },
+            "description": ""
+          },
+          {
+            "name": "durationMinutes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 720
+            },
+            "description": ""
+          },
+          {
+            "name": "minRating",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 5
+            },
+            "description": ""
+          },
+          {
+            "name": "withOperator",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            },
+            "description": ""
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "nearest",
+                "price_asc",
+                "price_desc",
+                "best_rated",
+                "most_rated",
+                "newest"
+              ],
+              "default": "nearest"
+            },
+            "description": ""
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60,
+              "default": 24
+            },
+            "description": ""
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100000,
+              "default": 0
+            },
+            "description": ""
+          }
+        ]
+      }
+    },
+    "/v1/machines/{id}": {
+      "get": {
+        "operationId": "getPublicMachine",
+        "summary": "Read public equipment details",
+        "tags": [
+          "Public catalogue"
+        ],
+        "description": "Read public equipment details",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/MachinePublic"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "ref_code": "EQ-EXAMPLE",
+                    "type": "example-type",
+                    "type_label": "Excavator",
+                    "make": "Example",
+                    "model": "Example model",
+                    "capacity": "Example capacity",
+                    "status": "Live",
+                    "image_uri": null,
+                    "city": "Hyderabad",
+                    "rate_daily": 5000,
+                    "rate_hourly": null,
+                    "rate_monthly": null,
+                    "weekly_discount_pct": null,
+                    "monthly_discount_pct": null,
+                    "operator_rate": 200,
+                    "machine_rating": null,
+                    "operator_rating": null,
+                    "distance_km": null,
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "year": 2024,
+                    "review_count": 0,
+                    "operator_included": false,
+                    "operator_available_on_request": true,
+                    "operator_rate_basis": "hourly",
+                    "kyc_verified": true,
+                    "image_uris": [],
+                    "feature_codes": []
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "MACHINE_NOT_VISIBLE; missing and hidden listings indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Public safe projection; never enrich based on an unverified bearer header.",
+        "x-source-evidence": [
+          {
+            "file": "services/marketplaceService.ts",
+            "line": 14,
+            "symbol": "export async function"
+          },
+          {
+            "file": "supabase/migrations/20261005102237_customer_guest_catalogue.sql",
+            "line": 26,
+            "symbol": "create or replace function public.search_guest_machines"
+          }
+        ],
+        "x-business-rules": [
+          "Call search_guest_machines with p_machine_id=id; no schedule filter; empty result maps to 404. All guest visibility gates still apply."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "String lengths, types array cap, strict booleans/unknown query rejection and bounds validation are proposed HTTP hardening.",
+          "Preserve snake_case guest fields and decimal-rupee listing rate values for compatibility; charged payment DTOs separately use explicit integer minor units. Confirm currency/casing migration with clients.",
+          "Public detail route intentionally never switches to private owner projection. Owners use existing owner fleet route."
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ]
+      }
+    },
+    "/v1/checkout-holds": {
+      "post": {
+        "operationId": "acquireCheckoutHold",
+        "summary": "Acquire or reuse checkout hold",
+        "tags": [
+          "Checkout holds"
+        ],
+        "description": "Acquire or reuse checkout hold",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/Hold"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "id": "00000000-0000-4000-8000-000000000001",
+                    "expiresAt": "2026-10-18T06:05:00Z"
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_WINDOW",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "MACHINE_UNAVAILABLE; includes current reservation/publication conflicts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "CONFLICT",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated. Customer admission required, not a caller-supplied role or customerId.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20261004205037_checkout_availability_hold.sql",
+            "line": 115,
+            "symbol": "create or replace function private.acquire_checkout_hold"
+          },
+          {
+            "file": "supabase/migrations/20261004205037_checkout_availability_hold.sql",
+            "line": 158,
+            "symbol": "create or replace function private.send_booking_request"
+          }
+        ],
+        "x-business-rules": [
+          "Actor resolved from selected admitted customer account. At most one hold per customer; another machine/window replaces previous hold atomically.",
+          "Acquire under current database advisory locks/exclusion checks; same live machine/window returns same ID and original expiry, not a sliding renewal. New hold lasts five minutes.",
+          "HTTP 200 for acquire-or-reuse: existing RPC does not return a created flag. Map expires_at to expiresAt; server clock is authoritative.",
+          "No Idempotency-Key requirement for this operation: current actor/window semantics provide retry behavior while hold lives. After expiry, a retry can acquire a new hold subject to current availability.",
+          "Missing/expired hold during subsequent booking submission is recoverable with atomic availability recheck. Live hold with wrong actor/machine/window is HOLD_MISMATCH, not a general HOLD_EXPIRED failure.",
+          "Validate date order, booking horizon and single-day timed window; startMinute+durationMinutes<=1440. Availability response before hold is advisory."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Proposed adapter restricts ordinary holds to the customer booking window: start today..today+29, end-start<=89, start minute360..1080 and duration60..720. Hold SQL helper itself permits a broader window. Confirm any priority/negotiated flow needing different windows before adopting these limits.",
+          "Cross-field/relative-date rules and today future-time rule must be implemented in service validation using Asia/Kolkata. No fixed date baked into schemas.",
+          "Final identity provider and app/device admission adapter remain unresolved; bearer scheme describes transport only."
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HoldInput"
+              },
+              "examples": {
+                "ordinaryHourlyHold": {
+                  "description": "Illustrative date; evaluate relative-date and future-time rules using the actual server clock.",
+                  "value": {
+                    "machineId": "00000000-0000-4000-8000-000000000001",
+                    "startDate": "2026-10-19",
+                    "endDate": "2026-10-19",
+                    "startMinute": 600,
+                    "durationMinutes": 120
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/checkout-holds/{id}": {
+      "delete": {
+        "operationId": "releaseCheckoutHold",
+        "summary": "Release own checkout hold",
+        "tags": [
+          "Checkout holds"
+        ],
+        "description": "Release own checkout hold",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Released, already expired, missing or foreign ID; never delete another customer hold."
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated. Customer admission required, not a caller-supplied role or customerId.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20261004205037_checkout_availability_hold.sql",
+            "line": 149,
+            "symbol": "create or replace function private.release_checkout_hold"
+          }
+        ],
+        "x-business-rules": [],
+        "x-proposed-changes-requiring-confirmation": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ]
+      }
+    },
+    "/v1/me/notifications": {
+      "get": {
+        "operationId": "listNotifications",
+        "summary": "Read own durable inbox",
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Read own durable inbox",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Recipient-owned inbox, created_at DESC/id DESC",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPage"
+                },
+                "example": {
+                  "data": [
+                    {
+                      "id": "00000000-0000-4000-8000-000000000001",
+                      "audience": "customer",
+                      "kind": "booking_status",
+                      "entityId": "00000000-0000-4000-8000-000000000002",
+                      "sourceId": "00000000-0000-4000-8000-000000000002",
+                      "machineLabel": "Excavator",
+                      "status": "Confirmed",
+                      "createdAt": "2026-10-18T06:00:00Z",
+                      "readAt": null
+                    }
+                  ],
+                  "page": {
+                    "limit": 40,
+                    "nextCursor": null
+                  },
+                  "meta": {
+                    "requestId": "example-request-001",
+                    "asOf": "2026-10-18T06:00:00Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_CURSOR or invalid audience/filter",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUDIENCE_DENIED",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated. Audience admission required.",
+        "x-source-evidence": [
+          {
+            "file": "services/notificationService.ts",
+            "line": 47,
+            "symbol": "export async function fetchNotifications"
+          },
+          {
+            "file": "supabase/migrations/20260919132002_notification_inbox.sql",
+            "line": 104,
+            "symbol": "create or replace function public.get_my_notifications"
+          }
+        ],
+        "x-business-rules": [
+          "Map unread to p_unread_only; false means all, not only read messages. No category filter exists in current RPC.",
+          "Decode cursor to p_before_at/p_before_id. When returned count equals requested limit, nextCursor may be non-null even if the next page is empty; otherwise null. No total count promised.",
+          "meta.asOf maps to statement-time as_of and is a bulk-read cutoff. Pagination is not snapshot isolation: newly inserted rows can appear on refresh and concurrent read-state changes can alter unread results.",
+          "Operator DTO remains money-free; never join unrestricted booking rows to populate it."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Audience must be permitted for current admitted account/app; do not infer permission from requested audience. This strengthens recipient-only SQL with an explicit API admission policy; confirm multi-persona owner-self-operator behavior.",
+          "Map snake_case SQL keys to documented camelCase DTO; do not expose recipient_id or event_key.",
+          "Opaque actor/filter-bound cursors, strict input validation and cap100 for support-message batches are proposed adapter controls."
+        ],
+        "parameters": [
+          {
+            "name": "audience",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "customer",
+                "owner",
+                "operator"
+              ]
+            },
+            "description": ""
+          },
+          {
+            "name": "unread",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false
+            },
+            "description": ""
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 40
+            },
+            "description": ""
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            },
+            "description": "Proposed opaque signed cursor, bound to actor, endpoint and filters. Decode to created_at/id; reject tampering or filter changes with 422 INVALID_CURSOR. Not a frozen database snapshot."
+          }
+        ]
+      }
+    },
+    "/v1/me/notification-counts": {
+      "get": {
+        "operationId": "getNotificationCounts",
+        "summary": "Read unread counts",
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Read unread counts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationCounts"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "byAudience": {
+                      "customer": 1
+                    }
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20260919132002_notification_inbox.sql",
+            "line": 123,
+            "symbol": "create or replace function public.get_my_notification_counts"
+          }
+        ],
+        "x-business-rules": [
+          "Counts are unread only. Emit permitted audiences returned by RPC; absent permitted audience means zero, not access granted. Unpermitted audiences omitted. No total or unread=false selector."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Audience must be permitted for current admitted account/app; do not infer permission from requested audience. This strengthens recipient-only SQL with an explicit API admission policy; confirm multi-persona owner-self-operator behavior.",
+          "Map snake_case SQL keys to documented camelCase DTO; do not expose recipient_id or event_key.",
+          "Opaque actor/filter-bound cursors, strict input validation and cap100 for support-message batches are proposed adapter controls."
+        ]
+      }
+    },
+    "/v1/me/notifications/{id}": {
+      "patch": {
+        "operationId": "setNotificationRead",
+        "summary": "Set own notification read flag",
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Set own notification read flag",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "RPC true -> 204; no Notification payload returned."
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "NOTIFICATION_NOT_FOUND",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20260919132002_notification_inbox.sql",
+            "line": 133,
+            "symbol": "create or replace function private.set_notification_read"
+          }
+        ],
+        "x-business-rules": [
+          "RPC false -> 404; unknown and foreign IDs indistinguishable. Repeated true may change read_at under existing SQL; only read/unread state is idempotent."
+        ],
+        "x-proposed-changes-requiring-confirmation": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationRead"
+              },
+              "examples": {
+                "read": {
+                  "value": {
+                    "read": true
+                  }
+                },
+                "unread": {
+                  "value": {
+                    "read": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/notifications/read": {
+      "post": {
+        "operationId": "markNotificationsRead",
+        "summary": "Mark inbox cutoff or support replies read",
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Mark inbox cutoff or support replies read",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Void RPC result; no updatedCount. No matching own rows is also 204."
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "INVALID_SCOPE or invalid cutoff/message IDs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "AUDIENCE_DENIED for scope=all",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Body exceeds configured limit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "PAYLOAD_TOO_LARGE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "Content-Type must be application/json",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNSUPPORTED_MEDIA_TYPE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20260919132002_notification_inbox.sql",
+            "line": 145,
+            "symbol": "create or replace function private.mark_all_notifications_read"
+          },
+          {
+            "file": "supabase/migrations/20260919132002_notification_inbox.sql",
+            "line": 156,
+            "symbol": "create or replace function private.mark_support_notifications_read"
+          }
+        ],
+        "x-business-rules": [
+          "scope=all: require authorized audience and before cutoff, normally latest inbox meta.asOf. SQL clamps cutoff to server statement time.",
+          "scope=support: messageIds are support message UUIDs, not notification or ticket IDs. Update only own support_reply rows with source_id in list; foreign/missing IDs ignored without revealing existence.",
+          "Reject fields from other branch; all and support shapes are mutually exclusive."
+        ],
+        "x-proposed-changes-requiring-confirmation": [
+          "Audience must be permitted for current admitted account/app; do not infer permission from requested audience. This strengthens recipient-only SQL with an explicit API admission policy; confirm multi-persona owner-self-operator behavior.",
+          "Map snake_case SQL keys to documented camelCase DTO; do not expose recipient_id or event_key.",
+          "Opaque actor/filter-bound cursors, strict input validation and cap100 for support-message batches are proposed adapter controls."
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationBulkRead"
+              },
+              "examples": {
+                "inboxCutoff": {
+                  "value": {
+                    "scope": "all",
+                    "audience": "customer",
+                    "before": "2026-10-18T06:00:00Z"
+                  }
+                },
+                "supportMessages": {
+                  "value": {
+                    "scope": "support",
+                    "messageIds": [
+                      "00000000-0000-4000-8000-000000000002"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/notifications/{id}/target": {
+      "get": {
+        "operationId": "getNotificationTarget",
+        "summary": "Read current navigation context",
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Read current navigation context",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/components/schemas/NotificationTarget"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/Meta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "additionalProperties": false
+                },
+                "example": {
+                  "data": {
+                    "status": "Confirmed",
+                    "assignmentState": null,
+                    "returnPending": false
+                  },
+                  "meta": {
+                    "requestId": "example-request-001"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request, duplicate scalar query parameter or invalid cursor encoding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Well-formed request fails schema or business validation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "VALIDATION_FAILED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Rate limit exceeded; obey Retry-After",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "RATE_LIMITED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            },
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until retry permitted",
+                "schema": {
+                  "type": "integer",
+                  "minimum": 1
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected error; no SQL or secret details exposed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Required backend unavailable; never report an empty successful result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "SERVICE_UNAVAILABLE",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, expired or replaced session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "UNAUTHENTICATED",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Account/app admission or action denied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "FORBIDDEN",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "TARGET_UNAVAILABLE; inaccessible, absent or unsupported target indistinguishable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": {
+                    "code": "NOT_FOUND",
+                    "message": "Illustrative sanitized error; use the operation-specific code where documented."
+                  },
+                  "requestId": "example-request-001"
+                }
+              }
+            }
+          }
+        },
+        "x-contract-status": "draft-source-reviewed-not-implemented",
+        "x-authorization-policy": "Verified admitted account and active device session; selected account UUID from trusted token/session mapping; only its own rows. Same-phone individual/company accounts remain isolated.",
+        "x-source-evidence": [
+          {
+            "file": "supabase/migrations/20260920090853_cancelled_booking_yard_return.sql",
+            "line": 427,
+            "symbol": "create or replace function private.get_notification_target"
+          }
+        ],
+        "x-business-rules": [
+          "Map RPC null to 404. Support target returns null status and assignmentState, with returnPending absent.",
+          "For supported booking targets, return safe status/assignment state and optional cancellation-return flag; never return the booking finance row.",
+          "Use already-owned inbox kind/entityId to choose a route. Context does not itself grant access to target resource; destination endpoint reauthorizes. Do not synthesize a URL or promise all notification kinds resolve."
+        ],
+        "x-proposed-changes-requiring-confirmation": [],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Resource UUID; ownership is checked separately."
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "Opaque transport contract; identity provider not selected. Server verifies token and selected-account/app/device admission. Never accept self-declared roles. No token issuance specified."
+      }
+    },
+    "schemas": {
+      "Meta": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "message": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "details": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "field": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 150
+                    },
+                    "reason": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    }
+                  },
+                  "required": [
+                    "field",
+                    "reason"
+                  ],
+                  "additionalProperties": false
+                },
+                "maxItems": 50
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "error",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      "Page": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "limit",
+          "nextCursor"
+        ],
+        "additionalProperties": false
+      },
+      "AddressCreate": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "\\S"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S"
+          },
+          "lat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lng": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "label",
+          "address"
+        ],
+        "additionalProperties": false,
+        "dependentRequired": {
+          "lat": [
+            "lng"
+          ],
+          "lng": [
+            "lat"
+          ]
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "lat": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "lat"
+              ]
+            },
+            "then": {
+              "properties": {
+                "lng": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "lng": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "lng"
+              ]
+            },
+            "then": {
+              "properties": {
+                "lat": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "AddressPatch": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "\\S"
+          },
+          "address": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1000,
+            "pattern": "\\S"
+          },
+          "lat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lng": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [],
+        "additionalProperties": false,
+        "minProperties": 1,
+        "dependentRequired": {
+          "lat": [
+            "lng"
+          ],
+          "lng": [
+            "lat"
+          ]
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "lat": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "lat"
+              ]
+            },
+            "then": {
+              "properties": {
+                "lng": {
+                  "type": "null"
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "lng": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "lng"
+              ]
+            },
+            "then": {
+              "properties": {
+                "lat": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Address": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string"
+          },
+          "address": {
+            "type": "string"
+          },
+          "lat": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -90,
+            "maximum": 90
+          },
+          "lng": {
+            "type": [
+              "number",
+              "null"
+            ],
+            "minimum": -180,
+            "maximum": 180
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "address",
+          "lat",
+          "lng",
+          "createdAt"
+        ],
+        "additionalProperties": false
+      },
+      "AddressPage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Address"
+            }
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "meta": {
+            "$ref": "#/components/schemas/Meta"
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "additionalProperties": false
+      },
+      "MachinePublic": {
+        "type": "object",
+        "properties": {
+          "ref_code": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type_label": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "make": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "model": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "capacity": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "image_uri": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rate_daily": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "rate_hourly": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "rate_monthly": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "weekly_discount_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "monthly_discount_pct": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "operator_rate": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "machine_rating": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "operator_rating": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "distance_km": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "year": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "review_count": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "operator_included": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "operator_available_on_request": {
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "operator_rate_basis": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "hourly",
+              "trip",
+              null
+            ]
+          },
+          "kyc_verified": {
+            "const": true,
+            "type": "boolean"
+          },
+          "image_uris": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "feature_codes": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ref_code",
+          "type",
+          "type_label",
+          "make",
+          "model",
+          "capacity",
+          "status",
+          "image_uri",
+          "city",
+          "rate_daily",
+          "rate_hourly",
+          "rate_monthly",
+          "weekly_discount_pct",
+          "monthly_discount_pct",
+          "operator_rate",
+          "machine_rating",
+          "operator_rating",
+          "distance_km",
+          "id",
+          "year",
+          "review_count",
+          "operator_included",
+          "operator_available_on_request",
+          "operator_rate_basis",
+          "kyc_verified",
+          "image_uris",
+          "feature_codes"
+        ],
+        "additionalProperties": false,
+        "description": "Exact guest RPC field allowlist, retaining snake_case. Nullable fields accommodate historical rows; reconcile hosted types/nullability before freezing. Listing rate numerics are legacy INR rupees, not paise, and are display values only; no financial arithmetic in floating point. No owner, phone, yard coordinates or document fields."
+      },
+      "MachineSearch": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MachinePublic"
+            },
+            "maxItems": 60
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 60
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100000
+          }
+        },
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "additionalProperties": false
+      },
+      "Bounds": {
+        "type": "object",
+        "properties": {
+          "south": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "north": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "west": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "east": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "south",
+          "north",
+          "west",
+          "east"
+        ],
+        "additionalProperties": false
+      },
+      "HoldInput": {
+        "type": "object",
+        "properties": {
+          "machineId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "startMinute": {
+            "type": "integer",
+            "minimum": 360,
+            "maximum": 1080
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "minimum": 60,
+            "maximum": 720
+          }
+        },
+        "required": [
+          "machineId",
+          "startDate",
+          "endDate"
+        ],
+        "additionalProperties": false,
+        "dependentRequired": {
+          "startMinute": [
+            "durationMinutes"
+          ],
+          "durationMinutes": [
+            "startMinute"
+          ]
+        }
+      },
+      "Hold": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "expiresAt"
+        ],
+        "additionalProperties": false
+      },
+      "Notification": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "audience": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "owner",
+              "operator"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100,
+            "description": "Extensible string; known current values documented in services/notificationService.ts. Unknown future kind must not trigger arbitrary navigation or unsafe reads."
+          },
+          "entityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "machineLabel": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "audience",
+          "kind",
+          "entityId",
+          "sourceId",
+          "machineLabel",
+          "status",
+          "createdAt",
+          "readAt"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationPage": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "maxItems": 100
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "requestId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              "asOf": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "requestId",
+              "asOf"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "data",
+          "page",
+          "meta"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationCounts": {
+        "type": "object",
+        "properties": {
+          "byAudience": {
+            "type": "object",
+            "properties": {
+              "customer": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "owner": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "operator": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "byAudience"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationRead": {
+        "type": "object",
+        "properties": {
+          "read": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "read"
+        ],
+        "additionalProperties": false
+      },
+      "NotificationBulkRead": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "scope": {
+                "type": "string",
+                "const": "all"
+              },
+              "audience": {
+                "type": "string",
+                "enum": [
+                  "customer",
+                  "owner",
+                  "operator"
+                ]
+              },
+              "before": {
+                "type": "string",
+                "format": "date-time"
+              }
+            },
+            "required": [
+              "scope",
+              "audience",
+              "before"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "scope": {
+                "type": "string",
+                "const": "support"
+              },
+              "messageIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "minItems": 1,
+                "maxItems": 100,
+                "uniqueItems": true
+              }
+            },
+            "required": [
+              "scope",
+              "messageIds"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      },
+      "NotificationTarget": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "assignmentState": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "returnPending": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "status",
+          "assignmentState"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "x-source-root": "/Users/vineeth_raj/Documents/Projects/equiprent-platform-private",
+  "x-source-commit": "70766035a1ecbd5b30ac5ca4acaf6b0323431cf0",
+  "x-contract-conventions": {
+    "unknownFields": "Reject unknown body and query fields; OpenAPI parameters do not enforce unknown-query rejection automatically.",
+    "queryParsing": "Strict true/false booleans, finite numbers and decimal integers. No null query values. Reject repeated scalar parameters; arrays use documented repetition. Decode bounds via explicit safe parser, never arbitrary object merging.",
+    "privateCaching": "Cache-Control: no-store for protected successes and errors. Public caching only after privacy-aware key and freshness policy are chosen; availability never guaranteed by cache.",
+    "requestCorrelation": "Server generates meta.requestId/error.requestId and X-Request-Id; sanitize incoming correlation values.",
+    "errorMapping": "Error status/code names are proposed HTTP translations, not current Postgres error names. Map recognized cases centrally; unknown SQL errors stay sanitized 500.",
+    "compatibility": "New /v1 adapter and client rollout required. Existing Supabase RPCs/clients are not automatically wire-compatible."
+  }
+}
